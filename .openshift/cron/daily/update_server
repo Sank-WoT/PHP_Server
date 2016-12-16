@@ -1,0 +1,4 @@
+#!/bin/bash
+cd $OPENSHIFT_REPO_DIR
+echo $OPENSHIFT_REPO_DIR
+php load_calendar_loop.php

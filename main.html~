@@ -1,0 +1,103 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" Content="text/html; Charset=Utf8" Access-Control-Allow-Origin="*">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(start);
+
+        var arrayCharts = [['time','bid','ask']];
+        var lastTime = 0;
+        var readyToParse = false;
+        var loadedText='';
+
+        function start()
+        {
+		var timeOffsetMoscow = (new Date().getTimezoneOffset()*-1)-180;
+		lastTime = Math.floor(new Date().getTime()/1000) + timeOffsetMoscow*60 - 3600;//Time hour ago
+		
+		console.log(timeOffsetMoscow);
+		loadString(lastTime);
+		setTimeout(update, 1000)
+
+        }
+
+        function update()
+        {
+
+            if (readyToParse)
+            {
+                readyToParse = false;
+
+                parseString(loadedText);
+                drawChart();
+                loadString(lastTime);
+            }
+
+            setTimeout(update, 1000)
+
+        }
+
+         function loadText (url) {
+
+             var h = new XMLHttpRequest();
+             h.open("GET", url);
+             h.onreadystatechange = function () {
+                 if(h.readyState != 4 && h.status != 200) return;
+                 loadedText = h.responseText;
+                 readyToParse = true;
+                 
+             };
+             h.send(null);
+        }
+
+        function loadString(offset)
+        {
+            loadText('https://currency-dred95.rhcloud.com/get_currency.php?time='+offset)
+        }
+
+        function parseString(source)
+        {
+            var arrayThees = source.split(';');
+
+            var tmpArray;
+            for (var i = 0; i < arrayThees.length; i++) {
+
+               tmpArray = arrayThees[i].split(',');
+
+                if (tmpArray.length==3)
+                {
+                    arrayCharts.push([ new Date(parseInt(tmpArray[0])*1000).toLocaleTimeString(), parseFloat(tmpArray[1]), parseFloat(tmpArray[2])]);
+                    lastTime = parseInt(tmpArray[0]);
+			if (arrayCharts.length >300)
+			{
+				arrayCharts.splice(1,1);
+			}
+                }
+            }
+        }
+
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable(arrayCharts);
+
+            var options = {
+                title: 'Eur/Usd',
+                curveType: 'none'//,
+                //legend: { position: 'bottom' }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+            chart.draw(data, options);
+        }
+    </script>
+<title>Предпросмотр работы программы анализа рынка</title>
+</head>
+<body>
+<div id="info" style="width: 900px; height: 50px">
+<center>Данный график в реальном времени показывает колебания курса валют</center>
+</div>
+<div id="curve_chart" style="width: 900px; height: 500px"></div>
+</body>
+</html>
